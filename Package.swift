@@ -1,4 +1,4 @@
-// swift-tools-version:5.3
+// swift-tools-version:5.5
 import PackageDescription
 
 let package = Package(
@@ -11,8 +11,8 @@ let package = Package(
     ],
     products: [
         .library(
-            name: "SignalProtocol",
-            targets: ["SignalProtocol"]),
+            name: "LibSignalProtocolSwift",
+            targets: ["LibSignalProtocolSwift"]),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-protobuf.git", from: "1.5.0"),
@@ -22,24 +22,20 @@ let package = Package(
         .target(
             name: "CommonCryptoModule",
             path: "Sources/CommonCryptoModule",
-            publicHeadersPath: "."
+            publicHeadersPath: "CommonCryptoBridge"
         ),
         .target(
-            name: "SignalProtocol",
+            name: "LibSignalProtocolSwift",
             dependencies: [
                 .product(name: "SwiftProtobuf", package: "swift-protobuf"),
                 .product(name: "Curve25519", package: "Curve25519"),
                 "CommonCryptoModule"
             ],
-            path: "Sources",
-            exclude: ["Info", "CommonCryptoModule"],
-            resources: [
-                .process("Info")
-            ]
+            path: "Sources/LibSignalProtocolSwift"
         ),
         .testTarget(
             name: "SignalProtocolTests",
-            dependencies: ["SignalProtocol"],
+            dependencies: ["LibSignalProtocolSwift"],
             path: "Tests",
             exclude: ["Info.plist"]
         ),
