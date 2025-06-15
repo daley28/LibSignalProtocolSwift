@@ -7,42 +7,41 @@
 //
 
 import Foundation
-import CommonCryptoModule
+import CommonCryptoBridge
 
 /**
- Implementation of the `SignalCryptoProvider` protocol using
- CommonCrypto.
+ SignalCommonCrypto provides cryptographic functions for the Signal Protocol.
  */
-public struct SignalCommonCrypto: SignalCryptoProvider {
-
-    // MARK: Protocol SignalCryptoProvider
+public struct SignalCommonCrypto {
 
     /**
-     Create a number of random bytes
-     - parameter bytes: The number of random bytes to create
-     - returns: An array of `bytes` length with random numbers
-     - throws: `SignalError.noRandomBytes`
+     Create a number of random bytes.
+     - parameter bytes: The number of bytes to create
+     - returns: The random bytes
+     - throws: `SignalError` of type `randomGenerationError`
      */
     public func random(bytes: Int) throws -> Data {
-        let random = [UInt8](repeating: 0, count: bytes)
-        let result = SecRandomCopyBytes(nil, bytes, UnsafeMutableRawPointer(mutating: random))
+        var random = [UInt8](repeating: 0, count: bytes)
+        let result = random.withUnsafeMutableBytes { ptr in
+            SecRandomCopyBytes(nil, bytes, ptr.baseAddress!)
+        }
 
         guard result == errSecSuccess else {
-            throw SignalError(.noRandomBytes, "Error getting random bytes: \(result)")
+            throw SignalError(.noRandomBytes, "Could not generate \(bytes) random bytes")
         }
         return Data(random)
     }
 
     /**
-     Create a HMAC authentication for a given message
-     - parameter message: The input message to create the HMAC for
-     - parameter salt: The salt for the HMAC
-     - returns: The HMAC
+     Perform HMAC with SHA256.
+     - parameter message: The message to authenticate
+     - parameter salt: The salt for the authentication
+     - returns: The authentication code
      */
     public func hmacSHA256(for message: Data, with salt: Data) -> Data {
         var context = CCHmacContext()
 
-        let bytes = [UInt8](repeating: 0, count: Int(CC_SHA256_DIGEST_LENGTH))
+        let bytes = [UInt8](repeating: 0, count: Int(CC_SHA256_DIGEST_LENGTH_Bridge))
         withUnsafeMutablePointer(to: &context) { (ptr: UnsafeMutablePointer<CCHmacContext>) in
             // Pointer to salt
             salt.withUnsafeBytes { ptr2 in
@@ -51,21 +50,20 @@ public struct SignalCommonCrypto: SignalCryptoProvider {
                 message.withUnsafeBytes { ptr3 in
                     let messagePtr = ptr3.baseAddress!
                     // Authenticate
-                    CCHmacInit(ptr, CCHmacAlgorithm(kCCHmacAlgSHA256), saltPtr, salt.count)
+                    CCHmacInit(ptr, CCHmacAlgorithm(kCCHmacAlgSHA256_Bridge), saltPtr, salt.count)
                     CCHmacUpdate(ptr, messagePtr, message.count)
                     CCHmacFinal(ptr, UnsafeMutableRawPointer(mutating: bytes))
                 }
             }
         }
-
         return Data(bytes)
     }
 
     /**
-     Create a SHA512 digest for a given message
-     - parameter message: The input message to create the digest for
-     - returns: The digest
-     - throws: `SignalError.digestError`
+     Perform SHA512 on a message.
+     - parameter message: The message to hash
+     - returns: The hash
+     - throws: `SignalError` of type `digestError` or `invalidMessage`
      */
     public func sha512(for message: Data) throws -> Data {
         guard message.count > 0 else {
@@ -82,110 +80,112 @@ public struct SignalCommonCrypto: SignalCryptoProvider {
             guard result == 1 else {
                 throw SignalError(.digestError, "Error on SHA512 Update: \(result)")
             }
-            var md = Data(count: Int(CC_SHA512_DIGEST_LENGTH))
+            var md = Data(count: Int(CC_SHA512_DIGEST_LENGTH_Bridge))
             let result2: Int32 = md.withUnsafeMutableBytes { ptr4 in
                 let a = ptr4.baseAddress!.assumingMemoryBound(to: UInt8.self)
                 return CC_SHA512_Final(a, contextPtr)
             }
             guard result2 == 1 else {
-                throw SignalError(.digestError, "Error on SHA512 Final: \(result)")
+                throw SignalError(.digestError, "Error on SHA512 Final: \(result2)")
             }
             return md
         }
     }
-    
+
     /**
-     Encrypt a message with AES
-     - parameter message: The input message to encrypt
-     - parameter cipher: THe encryption scheme to use
-     - parameter key: The key for encryption (`kCCKeySizeAES256` bytes)
-     - parameter iv: The initialization vector (`kCCBlockSizeAES128` bytes)
+     Encrypt a message.
+     - parameter message: The message to encrypt
+     - parameter cipher: The cipher to use
+     - parameter key: The key for encryption
+     - parameter iv: The initialization vector
      - returns: The encrypted message
-     - throws: `SignalError.encryptionError`
+     - throws: `SignalError` of type `encryptionError`, `invalidKey`, `invalidMessage`, or `invalidIV`
      */
     public func encrypt(message: Data, with cipher: SignalEncryptionScheme, key: Data, iv: Data) throws -> Data {
-        guard key.count == kCCKeySizeAES256 else {
+        guard key.count == kCCKeySizeAES256_Bridge else {
             throw SignalError(.invalidKey, "Invalid key length")
         }
         guard message.count > 0 else {
             throw SignalError(.invalidMessage, "Message length is 0")
         }
-        guard iv.count == kCCBlockSizeAES128 else {
+        guard iv.count == kCCBlockSizeAES128_Bridge else {
             throw SignalError(.invalidIV, "The length of the IV is not correct")
         }
+
         switch cipher {
-        case .AES_CBCwithPKCS5:
+        case .AES_CBC_PKCS5:
             return try process(cbc: message, key: key, iv: iv, encrypt: true)
-        case .AES_CTRnoPadding:
-            return try encrypt(ctr: message, key: key, iv: iv)
+        case .AES_CTR_NoPadding:
+            return try process(ctr: message, key: key, iv: iv, encrypt: true)
         }
     }
 
     /**
-     Decrypt a message with AES
-     - parameter message: The input message to decrypt
-     - parameter cipher: THe encryption scheme to use
-     - parameter key: The key for decryption (`kCCKeySizeAES256` bytes)
-     - parameter iv: The initialization vector (`kCCBlockSizeAES128` bytes)
+     Decrypt a message.
+     - parameter message: The message to decrypt
+     - parameter cipher: The cipher to use
+     - parameter key: The key for decryption
+     - parameter iv: The initialization vector
      - returns: The decrypted message
-     - throws: `SignalError.decryptionError`
+     - throws: `SignalError` of type `decryptionError`, `invalidKey`, `invalidMessage`, or `invalidIV`
      */
     public func decrypt(message: Data, with cipher: SignalEncryptionScheme, key: Data, iv: Data) throws -> Data {
-        guard key.count == kCCKeySizeAES256 else {
+        guard key.count == kCCKeySizeAES256_Bridge else {
             throw SignalError(.invalidKey, "Invalid key length")
         }
         guard message.count > 0 else {
             throw SignalError(.invalidMessage, "Message length is 0")
         }
-        guard iv.count == kCCBlockSizeAES128 else {
+        guard iv.count == kCCBlockSizeAES128_Bridge else {
             throw SignalError(.invalidIV, "The length of the IV is not correct")
         }
+
         switch cipher {
-        case .AES_CBCwithPKCS5:
+        case .AES_CBC_PKCS5:
             return try process(cbc: message, key: key, iv: iv, encrypt: false)
-        case .AES_CTRnoPadding:
-            return try decrypt(ctr: message, key: key, iv: iv)
+        case .AES_CTR_NoPadding:
+            return try process(ctr: message, key: key, iv: iv, encrypt: false)
         }
     }
 
-    // MARK: Encryption helper functions
-
     /**
-     Process (encrypt/decrypt) a message with AES in CBC mode and pkcs7 padding.
-     - parameter message: The input message to process
-     - parameter key: The key for encryption/decryption (`kCCKeySizeAES128` bytes)
+     Process a message with AES in CBC mode.
+     - parameter message: The message to process
+     - parameter key: The key
      - parameter iv: The initialization vector
-     - parameter encrypt: `true` if encrypting, `false` if decrypting
-     - returns: The encrypted/decrypted message
-     - throws: `SignalError.encryptionError`, `SignalError.decryptionError`
+     - parameter encrypt: Set to `true` to encrypt, `false` to decrypt
+     - returns: The processed message
+     - throws: `SignalError` of type `encryptionError` or `decryptionError`
      */
     private func process(cbc message: Data, key: Data, iv: Data, encrypt: Bool) throws -> Data {
-        let operation = encrypt ? CCOperation(kCCEncrypt) : CCOperation(kCCDecrypt)
+        let operation = encrypt ? CCOperation(kCCEncrypt_Bridge) : CCOperation(kCCDecrypt_Bridge)
         // Create output memory that can fit the output data
-        let dataLength = message.count + kCCBlockSizeAES128
+        let dataLength = message.count + kCCBlockSizeAES128_Bridge
         let ptr = UnsafeMutableRawPointer.allocate(byteCount: dataLength, alignment: MemoryLayout<UInt8>.alignment)
         defer { ptr.deallocate() }
 
         var dataOutMoved: Int = 0
-        // Pointer to key
-        let status: Int32 = key.withUnsafeBytes { ptr1 in
-            let keyPtr = ptr1.baseAddress!
-            // Pointer to IV
-            return iv.withUnsafeBytes { ptr2 in
-                let ivPtr = ptr2.baseAddress!
-                // Pointer to message
-                return message.withUnsafeBytes { ptr3 in
-                    let messagePtr = ptr3.baseAddress!
-                    // Options
-                    let algorithm = CCAlgorithm(kCCAlgorithmAES)
-                    let padding = CCOptions(kCCOptionPKCS7Padding)
-                    // Encrypt
-                    return CCCrypt(operation, algorithm, padding, keyPtr, key.count, ivPtr,
-                                   messagePtr, message.count, ptr, dataLength, &dataOutMoved)
+        let status: Int32 = withUnsafeMutablePointer(to: &dataOutMoved) { dataOutMovedPtr in
+            // Pointer to key
+            key.withUnsafeBytes { ptr1 in
+                let keyPtr = ptr1.baseAddress!
+                // Pointer to IV
+                return iv.withUnsafeBytes { ptr2 in
+                    let ivPtr = ptr2.baseAddress!
+                    // Pointer to message
+                    return message.withUnsafeBytes { ptr3 in
+                        let messagePtr = ptr3.baseAddress!
+                        // Options
+                        let algorithm = CCAlgorithm(kCCAlgorithmAES_Bridge)
+                        let padding = CCOptions(kCCOptionPKCS7Padding_Bridge)
+                        // Encrypt
+                        return CCCrypt(operation, algorithm, padding, keyPtr, key.count, ivPtr,
+                                       messagePtr, message.count, ptr, dataLength, dataOutMovedPtr)
+                    }
                 }
             }
         }
-        guard status == kCCSuccess else {
+        guard status == kCCSuccess_Bridge else {
             if encrypt {
                 throw SignalError(.encryptionError, "AES (CBC mode) encryption error: \(status)")
             } else {
@@ -195,56 +195,33 @@ public struct SignalCommonCrypto: SignalCryptoProvider {
 
         // Convert the pointers to data
         let typedPointer = ptr.bindMemory(to: UInt8.self, capacity: dataOutMoved)
-        let typedBuffer = UnsafeMutableBufferPointer(start: typedPointer, count: dataOutMoved)
+        let typedBuffer = UnsafeMutableBufferPointer<UInt8>(start: typedPointer, count: dataOutMoved)
         return Data(typedBuffer)
     }
 
     /**
-     Encrypt a message with AES in CTR mode and no padding.
-     - parameter message: The input message to encrypt
-     - parameter key: The key for encryption
+     Process a message with AES in CTR mode.
+     - parameter message: The message to process
+     - parameter key: The key
      - parameter iv: The initialization vector
-     - returns: The encrypted message
-     - throws: `SignalError.encryptionError`
-     */
-    private func encrypt(ctr message: Data, key: Data, iv: Data) throws -> Data {
-        return try process(ctr: message, key: key, iv: iv, encrypt: true)
-    }
-
-    /**
-     Decrypt a message with AES in CTR mode and no padding.
-     - parameter message: The input message to decrypt
-     - parameter key: The key for decryption
-     - parameter iv: The initialization vector
-     - returns: The decrypted message
-     - throws: `SignalError.decryptionError`
-     */
-    private func decrypt(ctr message: Data, key: Data, iv: Data) throws -> Data {
-        return try process(ctr: message, key: key, iv: iv, encrypt: false)
-    }
-
-    /**
-     Process (encrypt/decrypt) a message with AES in CTR mode and no padding.
-     - parameter message: The input message to process
-     - parameter key: The key for encryption/decryption
-     - parameter iv: The initialization vector
-     - parameter encrypt: `true` if encrypting, `false` if decrypting
-     - returns: The encrypted/decrypted message
-     - throws: `SignalError.encryptionError`, `SignalError.decryptionError`
+     - parameter encrypt: Set to `true` to encrypt, `false` to decrypt
+     - returns: The processed message
+     - throws: `SignalError` of type `encryptionError` or `decryptionError`
+     - note: In CTR mode, encryption and decryption are the same operation.
+     However, the `encrypt` parameter is kept for consistency.
      */
     private func process(ctr message: Data, key: Data, iv: Data, encrypt: Bool) throws -> Data {
         var cryptoRef: CCCryptorRef? = nil
         
         var status: Int32 = key.withUnsafeBytes { ptr1 in
             let keyPtr = ptr1.baseAddress!
-            // Pointer to IV
             return iv.withUnsafeBytes { ptr2 in
                 let ivPtr = ptr2.baseAddress!
-                let operation = encrypt ? CCOperation(kCCEncrypt) : CCOperation(kCCDecrypt)
-                let mode = CCMode(kCCModeCTR)
-                let algorithm = CCAlgorithm(kCCAlgorithmAES)
-                let padding = CCPadding(ccNoPadding)
-                let options = CCModeOptions(kCCModeOptionCTR_BE)
+                let operation = encrypt ? CCOperation(kCCEncrypt_Bridge) : CCOperation(kCCDecrypt_Bridge)
+                let mode = CCMode(kCCModeCTR_Bridge)
+                let algorithm = CCAlgorithm(kCCAlgorithmAES_Bridge)
+                let padding = CCPadding(ccNoPadding_Bridge)
+                let options = CCModeOptions(kCCModeOptionCTR_BE_Bridge)
                 return CCCryptorCreateWithMode(
                     operation, mode, algorithm, padding, ivPtr, keyPtr, key.count,
                     nil, 0, 0, options , &cryptoRef)
@@ -254,11 +231,11 @@ public struct SignalCommonCrypto: SignalCryptoProvider {
         // Release the reference before the method returns or throws an error
         defer { CCCryptorRelease(cryptoRef) }
 
-        guard status == kCCSuccess, let ref = cryptoRef else {
+        guard status == kCCSuccess_Bridge, let ref = cryptoRef else {
             if encrypt {
                 throw SignalError(.encryptionError, "AES (CTR mode) encryption init error: \(status)")
             } else {
-                throw SignalError(.decryptionError, "AES (CTR mode) Decryption init error: \(status)")
+                throw SignalError(.decryptionError, "AES (CTR mode) decryption init error: \(status)")
             }
         }
 
@@ -267,61 +244,44 @@ public struct SignalCommonCrypto: SignalCryptoProvider {
         // Release the memory before the method returns or throws an error
         defer { ptr.deallocate() }
 
-        var updateMovedLength = 0
+        var updateMovedLength: Int = 0
         status = withUnsafeMutablePointer(to: &updateMovedLength) { updatedPtr in
             message.withUnsafeBytes { ptr3 in
                 let messagePtr = ptr3.baseAddress!
                 return CCCryptorUpdate(ref, messagePtr, message.count, ptr, outputLength, updatedPtr)
             }
         }
+
         guard updateMovedLength <= outputLength else {
             throw SignalError(.encryptionError, "Updated bytes \(updateMovedLength) for \(outputLength) total bytes")
         }
-        guard status == kCCSuccess else {
+        guard status == kCCSuccess_Bridge else {
             if encrypt {
                 throw SignalError(.encryptionError, "AES (CTR mode) encryption update error: \(status)")
             } else {
-                throw SignalError(.decryptionError, "AES (CTR mode) Decryption update error: \(status)")
+                throw SignalError(.decryptionError, "AES (CTR mode) decryption update error: \(status)")
             }
         }
 
-        let available = outputLength - updateMovedLength
+        // Finalize
         let ptr2 = ptr.advanced(by: updateMovedLength)
+        let available = outputLength - updateMovedLength
         var finalMovedLength: Int = 0
         status = withUnsafeMutablePointer(to: &finalMovedLength) {
                 CCCryptorFinal(ref, ptr2, available, $0)
         }
         let finalLength = updateMovedLength + finalMovedLength
-        guard status == kCCSuccess else {
+        guard status == kCCSuccess_Bridge else {
             if encrypt {
                 throw SignalError(.encryptionError, "AES (CTR mode) encryption update error: \(status)")
             } else {
-                throw SignalError(.decryptionError, "AES (CTR mode) Decryption update error: \(status)")
+                throw SignalError(.decryptionError, "AES (CTR mode) decryption update error: \(status)")
             }
         }
-        // For decryption, the final length can be less due to padding
-        if encrypt && finalLength != outputLength {
-            throw SignalError(.encryptionError, "AES (CTR mode): Output length not correct \(finalLength), \(outputLength), \(updateMovedLength), \(finalMovedLength)")
-        }
-        return toArray(from: ptr, count: finalLength)
-    }
 
-    /**
-     Create an array from an unsafe pointer.
-     - parameter ptr: Pointer to initialized storage
-     - parameter count: The length of the array
-     - returns: The created array
-    */
-    private func toArray(from ptr: UnsafeMutableRawPointer, count: Int) -> Data {
-        let typedPointer = ptr.bindMemory(to: UInt8.self, capacity: count)
-        let typedBuffer = UnsafeMutableBufferPointer(start: typedPointer, count: count)
+        // Convert the pointers to data
+        let typedPointer = ptr.bindMemory(to: UInt8.self, capacity: finalLength)
+        let typedBuffer = UnsafeMutableBufferPointer<UInt8>(start: typedPointer, count: finalLength)
         return Data(typedBuffer)
-    }
-
-    /**
-     Create an instance.
-     */
-    public init() {
-
     }
 }

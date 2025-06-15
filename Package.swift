@@ -21,8 +21,9 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "CommonCryptoModule",
+            name: "CommonCryptoBridge",
             path: "Sources/CommonCryptoModule",
+            sources: ["CommonCryptoBridge.c"],
             publicHeadersPath: "CommonCryptoBridge"
         ),
         .target(
@@ -30,21 +31,15 @@ let package = Package(
             dependencies: [
                 .product(name: "SwiftProtobuf", package: "swift-protobuf"),
                 .product(name: "Curve25519", package: "Curve25519"),
-                "CommonCryptoModule"
+                "CommonCryptoBridge"
             ],
             path: "Sources/LibSignalProtocolSwift",
-            exclude: [
-                "Info/Info.plist",
-                "ProtocolBuffers/Fingerprint.proto",
-                "ProtocolBuffers/Messages.proto", 
-                "ProtocolBuffers/LocalStorage.proto"
-            ]
+            exclude: ["Info"]
         ),
         .testTarget(
             name: "SignalProtocolTests",
             dependencies: ["LibSignalProtocolSwift"],
-            path: "Tests",
-            exclude: ["Info.plist"]
+            path: "Tests/Test Implementation"
         ),
     ]
 )
