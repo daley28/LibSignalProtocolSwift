@@ -7,7 +7,7 @@
 //
 
 import XCTest
-@testable import SignalProtocol
+@testable import LibSignalProtocolSwift
 
 class SessionRecordTests: XCTestCase {
 

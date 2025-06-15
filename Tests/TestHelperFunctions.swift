@@ -7,7 +7,7 @@
 //
 
 import Foundation
-@testable import SignalProtocol
+@testable import LibSignalProtocolSwift
 
 private let alicePublic = Data([
     0x1b, 0xb7, 0x59, 0x66, 0xf2, 0xe9, 0x3a, 0x36, 0x91, 0xdf, 0xff,

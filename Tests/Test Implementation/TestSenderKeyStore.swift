@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import SignalProtocol
+import LibSignalProtocolSwift
 
 /**
  Implement the `SenderKeyStore` protocol to handle the sender key storage of the Signal Protocol.

@@ -7,7 +7,7 @@
 //
 
 import XCTest
-@testable import SignalProtocol
+@testable import LibSignalProtocolSwift
 
 private let aliceIdentityData = Data([
     0x06, 0x86, 0x3b, 0xc6, 0x6d, 0x02, 0xb4, 0x0d,

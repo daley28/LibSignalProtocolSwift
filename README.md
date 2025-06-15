@@ -12,16 +12,35 @@ It somewhat mimics the functionality and structure of the [Signal Protocol C imp
 
 ## Installation
 
-You can install `LibSignalProtocolSwift` through [Cocoapods](https://cocoapods.org), by adding the following to your `Podfile`:
+### Swift Package Manager (Recommended)
 
-````ruby
+You can install `LibSignalProtocolSwift` through [Swift Package Manager](https://swift.org/package-manager/) by adding it to your `Package.swift`:
+
+```swift
+dependencies: [
+    .package(url: "https://github.com/christophhagen/LibSignalProtocolSwift.git", from: "1.3.0")
+]
+```
+
+Or add it through Xcode:
+1. File → Add Package Dependencies
+2. Enter the repository URL: `https://github.com/christophhagen/LibSignalProtocolSwift.git`
+3. Select the version you want to use
+
+### CocoaPods
+
+You can also install `LibSignalProtocolSwift` through [Cocoapods](https://cocoapods.org), by adding the following to your `Podfile`:
+
+```ruby
 pod 'LibSignalProtocolSwift', '~> 1.3'
-````
+```
+
+### Importing
 
 After installation the Framework can be accessed by importing it:
 
 ```swift
-import SignalProtocol
+import LibSignalProtocolSwift
 ```
 
 ## Prerequisites
@@ -64,8 +83,10 @@ The standard process to establish an encrypted session between two devices (two 
 
 Before any secure communication can happen, at least one user needs to upload all necessary ingredients for a `PreKeyBundle` to the server.
 
-````swift
-// Create the identity key ata install time
+```swift
+import LibSignalProtocolSwift
+
+// Create the identity key at install time
 let identity = try SignalCrypto.generateIdentityKeyPair()
 
 // Store the data in the key store
@@ -80,13 +101,15 @@ let preKeys: [Data] = try bobStore.createPreKeys(count: 10)
 let signedPreKey: Data = try bobStore.updateSignedPrekey()
 
 // Upload publicKey, preKeys, and signedPreKey to the server
-````
+```
 
 ### Creating a session from a PreKeyBundle
 
 Let's assume that Alice (who has the `SignalAddress` aliceAddress) wants to establish a session with Bob (`SignalAddress` bobAddress)
 
-````swift
+```swift
+import LibSignalProtocolSwift
+
 // Download Bob's identity, current signedPreKey and one of the preKeys from the server
 
 // Create PreKeyBundle
@@ -106,12 +129,14 @@ let message = "Hello Bob, it's Alice".data(using: .utf8)!
 let encryptedMessage = try session.encrypt(message)
 
 // Upload the message to the server
-````
+```
 
 ### Creating a session from a received PreKeySignalMessage
 Let's continue the above example and assume Bob receives the message from Alice. Bob can then establish the session:
 
-````swift
+```swift
+import LibSignalProtocolSwift
+
 // Get the message from the server
 
 // Create the session
@@ -119,7 +144,7 @@ let session = SessionCipher(store: bobStore, remoteAddress: aliceAddress)
 
 // Process the message
 let decryptedMessage = try session.decrypt(preKeyMessage)
-````
+```
 
 ### Using an already established session
 Now Alice and Bob can both send and receive messages at will.
@@ -127,6 +152,8 @@ Now Alice and Bob can both send and receive messages at will.
 #### Sending
 
 ```swift
+import LibSignalProtocolSwift
+
 // Compose a message
 let message =  "Hello there".data(using: .utf8)!
 
@@ -140,6 +167,8 @@ let encryptedMessage = try session.encrypt(message)
 #### Receiving
 
 ```swift
+import LibSignalProtocolSwift
+
 // Get message from the server
 
 // Receive message from Alice
@@ -156,6 +185,8 @@ by manually comparing the fingerprints or through scanning some sort of code (e.
 The library provides a convenient way for this:
 
 ```swift
+import LibSignalProtocolSwift
+
 // Create the fingerprint
 let aliceFP = try aliceStore.fingerprint(for: bobAddress, localAddress: aliceAddress)
 
@@ -178,6 +209,8 @@ and an `Int`, the `deviceId`. However it is possible to use different structs, c
 conform to the `Hashable`, `Equatable` and `CustomStringConvertible` protocols. For example, simple strings can be used:
 
 ```swift
+import LibSignalProtocolSwift
+
 class MyCustomKeyStore: KeyStore {
 
     typealias Address = String
@@ -200,6 +233,8 @@ to serve as the cryptographic backbone of the protocol. This can be done by
 setting the static `provider` variable of the `SignalCrypto` class:
 
 ```swift
+import LibSignalProtocolSwift
+
 SignalCrypto.provider = MyCustomCryptoProvider()
 ```
 
@@ -207,6 +242,29 @@ The elliptic curve functions are handled by the same C code that is deployed in
 [libsignal-protocol-c](https://github.com/signalapp/libsignal-protocol-c)
 and which is packaged in the [Curve25519](https://github.com/christophhagen/Curve25519)
 framework to make the functions available in Swift.
+
+## Technical Details
+
+### Swift Package Manager Support
+
+This library now includes full Swift Package Manager support with a custom CommonCrypto bridge that enables:
+- Native SPM compatibility without CocoaPods dependencies
+- Cross-platform support (iOS, macOS, tvOS, watchOS)
+- Modern Swift toolchain compatibility (Swift 5.7+)
+- Proper module isolation and dependency management
+
+### Dependencies
+
+- **SwiftProtobuf**: For Protocol Buffer serialization
+- **Curve25519**: For elliptic curve cryptographic operations
+- **CommonCrypto Bridge**: Custom C bridge for CommonCrypto functions (SPM compatible)
+
+### Platform Support
+
+- iOS 12.0+
+- macOS 10.15+
+- tvOS 12.0+
+- watchOS 6.0+
 
 #### Documentation
 

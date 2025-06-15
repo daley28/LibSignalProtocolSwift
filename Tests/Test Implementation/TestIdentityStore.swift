@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import SignalProtocol
+import LibSignalProtocolSwift
 
 /**
  Implement the `IdentityKeyStore` protocol to handle the identity keys of the Signal Protocol.

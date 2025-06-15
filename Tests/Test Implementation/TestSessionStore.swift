@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import SignalProtocol
+import LibSignalProtocolSwift
 
 /**
  Implement the `SessionStore` protocol to handle the session records of the Signal Protocol.

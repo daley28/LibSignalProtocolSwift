@@ -6,7 +6,8 @@
 //  Copyright © 2017 User. All rights reserved.
 //
 
-import SignalProtocol
+import Foundation
+import LibSignalProtocolSwift
 
 /**
  Implement the key store for testing purposes.

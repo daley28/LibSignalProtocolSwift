@@ -7,7 +7,7 @@
 //
 
 import XCTest
-@testable import SignalProtocol
+@testable import LibSignalProtocolSwift
 
 private let ciphertext = "WhisperCipherText".data(using: .utf8)!
 

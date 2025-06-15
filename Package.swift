@@ -35,7 +35,12 @@ let package = Package(
                 "CommonCryptoBridge"
             ],
             path: "Sources/LibSignalProtocolSwift",
-            exclude: ["Info"]
+            exclude: [
+                "Info",
+                "ProtocolBuffers/Fingerprint.proto",
+                "ProtocolBuffers/LocalStorage.proto", 
+                "ProtocolBuffers/Messages.proto"
+            ]
         ),
         .testTarget(
             name: "SignalProtocolTests",
