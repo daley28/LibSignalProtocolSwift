@@ -1,5 +1,6 @@
 # LibSignalProtocolSwift
 [![Swift](https://github.com/daley28/LibSignalProtocolSwift/actions/workflows/swift.yml/badge.svg)](https://github.com/daley28/LibSignalProtocolSwift/actions/workflows/swift.yml)
+
 A Swift implementation of the Signal Protocol. The [Signal Protocol](https://en.wikipedia.org/wiki/Signal_Protocol)
 can be used for secure, end-to-end encrypted messaging in synchronous and asynchronous environments. It has
 many desirable cryptographic features and can handle missing and out-of-order messages. The Signal protocol
