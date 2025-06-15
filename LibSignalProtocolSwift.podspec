@@ -5,14 +5,14 @@ Pod::Spec.new do |spec|
 
     spec.version = '1.3'
     spec.source = {
-        :git => 'https://github.com/christophhagen/LibSignalProtocolSwift.git',
+        :git => 'https://github.com/daley28/LibSignalProtocolSwift.git',
         :tag => spec.version
     }
     spec.swift_version = '5.0'
     spec.module_name  = 'SignalProtocol'
 
     spec.authors = { 'Christoph Hagen' => 'christoph@spacemasters.eu' }
-    spec.homepage = 'https://github.com/christophhagen/LibSignalProtocolSwift'
+    spec.homepage = 'https://github.com/daley28/LibSignalProtocolSwift'
 
     spec.ios.deployment_target = '9.0'
     spec.osx.deployment_target = '10.9'
