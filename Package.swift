@@ -23,6 +23,7 @@ let package = Package(
         .target(
             name: "CommonCryptoBridge",
             path: "Sources/CommonCryptoModule",
+            exclude: ["CommonCryptoModule.h", "Empty.swift"],
             sources: ["CommonCryptoBridge.c"],
             publicHeadersPath: "CommonCryptoBridge"
         ),

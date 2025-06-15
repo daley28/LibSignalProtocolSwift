@@ -12,7 +12,7 @@ import CommonCryptoBridge
 /**
  SignalCommonCrypto provides cryptographic functions for the Signal Protocol.
  */
-public struct SignalCommonCrypto {
+public struct SignalCommonCrypto: SignalCryptoProvider {
 
     /**
      Create a number of random bytes.
@@ -113,9 +113,9 @@ public struct SignalCommonCrypto {
         }
 
         switch cipher {
-        case .AES_CBC_PKCS5:
+        case .AES_CBCwithPKCS5:
             return try process(cbc: message, key: key, iv: iv, encrypt: true)
-        case .AES_CTR_NoPadding:
+        case .AES_CTRnoPadding:
             return try process(ctr: message, key: key, iv: iv, encrypt: true)
         }
     }
@@ -141,9 +141,9 @@ public struct SignalCommonCrypto {
         }
 
         switch cipher {
-        case .AES_CBC_PKCS5:
+        case .AES_CBCwithPKCS5:
             return try process(cbc: message, key: key, iv: iv, encrypt: false)
-        case .AES_CTR_NoPadding:
+        case .AES_CTRnoPadding:
             return try process(ctr: message, key: key, iv: iv, encrypt: false)
         }
     }
@@ -160,7 +160,7 @@ public struct SignalCommonCrypto {
     private func process(cbc message: Data, key: Data, iv: Data, encrypt: Bool) throws -> Data {
         let operation = encrypt ? CCOperation(kCCEncrypt_Bridge) : CCOperation(kCCDecrypt_Bridge)
         // Create output memory that can fit the output data
-        let dataLength = message.count + kCCBlockSizeAES128_Bridge
+        let dataLength = message.count + Int(kCCBlockSizeAES128_Bridge)
         let ptr = UnsafeMutableRawPointer.allocate(byteCount: dataLength, alignment: MemoryLayout<UInt8>.alignment)
         defer { ptr.deallocate() }
 
@@ -283,5 +283,12 @@ public struct SignalCommonCrypto {
         let typedPointer = ptr.bindMemory(to: UInt8.self, capacity: finalLength)
         let typedBuffer = UnsafeMutableBufferPointer<UInt8>(start: typedPointer, count: finalLength)
         return Data(typedBuffer)
+    }
+    
+    /**
+     Create an instance.
+     */
+    public init() {
+        
     }
 }

@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import SignalProtocol
+import LibSignalProtocolSwift
 
 /**
  Use CommonCrypto, but use predictable random numbers
