@@ -1,4 +1,4 @@
-// swift-tools-version:5.5
+// swift-tools-version:5.7
 import PackageDescription
 
 let package = Package(
@@ -6,16 +6,17 @@ let package = Package(
     platforms: [
         .iOS(.v12),
         .macOS(.v10_15),
-        .tvOS(.v9),
-        .watchOS(.v4)
+        .tvOS(.v12),
+        .watchOS(.v6)
     ],
     products: [
         .library(
             name: "LibSignalProtocolSwift",
+            type: .static,
             targets: ["LibSignalProtocolSwift"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-protobuf.git", from: "1.5.0"),
+        .package(url: "https://github.com/apple/swift-protobuf.git", from: "1.20.0"),
         .package(url: "https://github.com/christophhagen/Curve25519.git", from: "2.0.0")
     ],
     targets: [
@@ -31,7 +32,13 @@ let package = Package(
                 .product(name: "Curve25519", package: "Curve25519"),
                 "CommonCryptoModule"
             ],
-            path: "Sources/LibSignalProtocolSwift"
+            path: "Sources/LibSignalProtocolSwift",
+            exclude: [
+                "Info/Info.plist",
+                "ProtocolBuffers/Fingerprint.proto",
+                "ProtocolBuffers/Messages.proto", 
+                "ProtocolBuffers/LocalStorage.proto"
+            ]
         ),
         .testTarget(
             name: "SignalProtocolTests",

@@ -1,4 +1,5 @@
-module CommonCryptoBridge [system] {
-    header "CommonCryptoBridge.h"
+module CommonCryptoModule [system] {
+    umbrella header "CommonCryptoBridge.h"
     export *
+    module * { export * }
 }

@@ -191,7 +191,7 @@ extension SignalMessage: ProtocolBufferSerializable {
 
         let protoObject: Signal_SignalMessage
         do {
-            protoObject = try Signal_SignalMessage(serializedData: newData)
+            protoObject = try Signal_SignalMessage(serializedBytes: newData)
         } catch {
             throw SignalError(.invalidProtoBuf, "Could not create SignalMessage ProtoBuf object: \(error)")
         }

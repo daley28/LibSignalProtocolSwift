@@ -56,7 +56,7 @@ extension ProtocolBufferConvertible {
     public init(from protoData: Data) throws {
         let protoObject: ProtocolBufferClass
         do {
-            protoObject = try ProtocolBufferClass(serializedData: protoData)
+            protoObject = try ProtocolBufferClass(serializedBytes: protoData)
         } catch {
             throw SignalError(.invalidProtoBuf, "Deserialization error: \(error)")
         }

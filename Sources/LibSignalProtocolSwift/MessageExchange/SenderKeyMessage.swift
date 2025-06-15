@@ -141,7 +141,7 @@ extension SenderKeyMessage: ProtocolBufferSerializable {
         let signature = data[length...]
         let object: Signal_SenderKeyMessage
         do {
-            object = try Signal_SenderKeyMessage(serializedData: content)
+            object = try Signal_SenderKeyMessage(serializedBytes: content)
         } catch {
            throw SignalError(.invalidProtoBuf, "Could not create sender key message object: \(error)")
         }

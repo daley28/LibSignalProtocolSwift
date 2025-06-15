@@ -104,7 +104,7 @@ extension DeviceConsistencyMessage {
     init(from data: Data, commitment: DeviceConsistencyCommitmentV0, identityKey: PublicKey) throws {
         let object: Signal_DeviceConsistencyCodeMessage
         do {
-            object = try Signal_DeviceConsistencyCodeMessage(serializedData: data)
+            object = try Signal_DeviceConsistencyCodeMessage(serializedBytes: data)
         } catch {
             throw SignalError(.invalidProtoBuf,
                               "Could not deserialize DeviceConsistencyMessage: \(error.localizedDescription)")
