@@ -18,12 +18,11 @@ This is a fork of [christophhagen/LibSignalProtocolSwift](https://github.com/chr
 
 ### Key Improvements in This Fork:
 
-- ✅ **Native SPM Compatibility**: Complete Swift Package Manager support without CocoaPods dependencies
-- ✅ **CommonCrypto Integration**: Custom C bridge that solves the notorious CommonCrypto + SPM compatibility issue
-- ✅ **Modern Swift Support**: Updated for Swift 5.7+ with proper toolchain compatibility
-- ✅ **Cross-Platform**: Full support for iOS, macOS, tvOS, watchOS
-- ✅ **Zero Warnings**: Clean build with no compiler warnings or deprecated syntax
-- ✅ **Updated Dependencies**: Modern SwiftProtobuf and other dependency versions
+- **Native SPM Compatibility**: Complete Swift Package Manager support without CocoaPods dependencies
+- **CommonCrypto Integration**: Custom C bridge that solves the notorious CommonCrypto + SPM compatibility issue
+- **Modern Swift Support**: Updated for Swift 5.7+ with proper toolchain compatibility
+- **Apple Platforms**: Supports iOS 12+, macOS 10.15+, tvOS 12+, watchOS 6+
+- **Updated Dependencies**: Modern SwiftProtobuf and other dependency versions
 
 ### Why This Fork?
 
@@ -81,7 +80,7 @@ There is a feature for group updates, where only one administrator can send, and
 
 ### Sample implementation
 
-You can have a look at the [test implementation](https://github.com/daley28/LibSignalProtocolSwift/tree/master/Tests/Test%20Implementation) for inspiration.
+You can have a look at the [test implementation](https://github.com/daley28/LibSignalProtocolSwift/tree/master/Tests/SignalProtocolTests/Helpers) for inspiration.
 
 ### Server for message delivery
 The server that stores the messages for retrieval needs to store the following data for each `SignalAddress`:
@@ -268,9 +267,9 @@ framework to make the functions available in Swift.
 
 ### Swift Package Manager Support
 
-This library now includes full Swift Package Manager support with a custom CommonCrypto bridge that enables:
+This library includes Swift Package Manager support with a custom CommonCrypto bridge that enables:
 - Native SPM compatibility without CocoaPods dependencies
-- Cross-platform support (iOS, macOS, tvOS, watchOS)
+- Apple platform support (iOS, macOS, tvOS, watchOS)
 - Modern Swift toolchain compatibility (Swift 5.7+)
 - Proper module isolation and dependency management
 

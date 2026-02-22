@@ -1,4 +1,4 @@
-#include "CommonCryptoBridge/CommonCryptoBridge.h"
+#include "CommonCryptoBridge.h"
 
 // Define CommonCrypto constants
 const int kCCKeySizeAES256_Bridge = kCCKeySizeAES256;

@@ -23,7 +23,7 @@ public struct SignalCommonCrypto: SignalCryptoProvider {
     public func random(bytes: Int) throws -> Data {
         var random = [UInt8](repeating: 0, count: bytes)
         let result = random.withUnsafeMutableBytes { ptr in
-            SecRandomCopyBytes(nil, bytes, ptr.baseAddress!)
+            SecRandomCopyBytes(kSecRandomDefault, bytes, ptr.baseAddress!)
         }
 
         guard result == errSecSuccess else {

@@ -12,7 +12,6 @@ let package = Package(
     products: [
         .library(
             name: "LibSignalProtocolSwift",
-            type: .static,
             targets: ["LibSignalProtocolSwift"]),
     ],
     dependencies: [
@@ -22,10 +21,11 @@ let package = Package(
     targets: [
         .target(
             name: "CommonCryptoBridge",
-            path: "Sources/CommonCryptoModule",
-            exclude: ["CommonCryptoModule.h", "Empty.swift"],
-            sources: ["CommonCryptoBridge.c"],
-            publicHeadersPath: "CommonCryptoBridge"
+            path: "Sources/CommonCryptoBridge",
+            publicHeadersPath: "include",
+            linkerSettings: [
+                .linkedLibrary("CommonCrypto", .when(platforms: [.macOS, .iOS, .tvOS, .watchOS]))
+            ]
         ),
         .target(
             name: "LibSignalProtocolSwift",
@@ -37,15 +37,19 @@ let package = Package(
             path: "Sources/LibSignalProtocolSwift",
             exclude: [
                 "Info",
+                "SignalProtocol.h",
                 "ProtocolBuffers/Fingerprint.proto",
-                "ProtocolBuffers/LocalStorage.proto", 
+                "ProtocolBuffers/LocalStorage.proto",
                 "ProtocolBuffers/Messages.proto"
+            ],
+            linkerSettings: [
+                .linkedFramework("Security", .when(platforms: [.macOS, .iOS, .tvOS, .watchOS]))
             ]
         ),
         .testTarget(
             name: "SignalProtocolTests",
             dependencies: ["LibSignalProtocolSwift"],
-            path: "Tests/Test Implementation"
+            path: "Tests/SignalProtocolTests"
         ),
     ]
 )
