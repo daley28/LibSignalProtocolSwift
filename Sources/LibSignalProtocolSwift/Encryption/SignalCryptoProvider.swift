@@ -11,7 +11,7 @@ import Foundation
 /**
  Specifies the type of algorithm to use for encryption and decryption.
  */
-public enum SignalEncryptionScheme {
+public enum SignalEncryptionScheme: Sendable {
     /// Encrypt/decrypt with AES in CBC mode with PKCS5 padding
     case AES_CBCwithPKCS5
     /// Encrypt/decrypt with AES in CTR mode with no padding

@@ -16,6 +16,19 @@ class KeyHelperTests: XCTestCase {
         super.setUp()
         SignalCrypto.provider = TestFakeCryptoProvider()
     }
+
+    override func tearDown() {
+        SignalCrypto.provider = SignalCommonCrypto()
+        super.tearDown()
+    }
+
+    func testCryptoProviderCanBeReplaced() {
+        SignalCrypto.provider = SignalCommonCrypto()
+        XCTAssertTrue(SignalCrypto.provider is SignalCommonCrypto)
+
+        SignalCrypto.provider = TestFakeCryptoProvider()
+        XCTAssertTrue(SignalCrypto.provider is TestFakeCryptoProvider)
+    }
     
     func testGenerateIdentityKeyPair() {
         let identityKeyPair = Data([

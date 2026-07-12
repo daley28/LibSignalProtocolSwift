@@ -11,7 +11,7 @@ import Foundation
 /**
  The different types of errors that can occur using the SignalProtocolSwift library.
  */
-public enum SignalErrorType: String {
+public enum SignalErrorType: String, Sendable {
     /// Unknown errors should only be thrown of no other, more descriptive error type exists
     case unknown = "Unknown"
 

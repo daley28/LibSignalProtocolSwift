@@ -29,7 +29,7 @@ let package = Package(
             dependencies: [
                 .product(name: "SwiftProtobuf", package: "swift-protobuf"),
                 .product(name: "Curve25519", package: "Curve25519"),
-                "CommonCryptoBridge"
+                .target(name: "CommonCryptoBridge")
             ],
             path: "Sources/LibSignalProtocolSwift",
             exclude: [
@@ -45,7 +45,9 @@ let package = Package(
         ),
         .testTarget(
             name: "SignalProtocolTests",
-            dependencies: ["LibSignalProtocolSwift"],
+            dependencies: [
+                .target(name: "LibSignalProtocolSwift")
+            ],
             path: "Tests/SignalProtocolTests"
         ),
     ]

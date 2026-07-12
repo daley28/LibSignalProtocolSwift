@@ -22,7 +22,36 @@ public struct SignalCrypto {
     /**
      This variable can be set to provide a custom crypto provider.
      */
-    public static var provider: SignalCryptoProvider = SignalCommonCrypto()
+    public static var provider: SignalCryptoProvider {
+        get { providerStorage.value }
+        set { providerStorage.value = newValue }
+    }
+
+    private static let providerStorage = ProviderStorage(SignalCommonCrypto())
+
+    // `ProviderStorage` is `@unchecked Sendable` because every access to the
+    // mutable provider reference is serialized by this private lock.
+    private final class ProviderStorage: @unchecked Sendable {
+        private let lock = NSLock()
+        private var provider: SignalCryptoProvider
+
+        init(_ provider: SignalCryptoProvider) {
+            self.provider = provider
+        }
+
+        var value: SignalCryptoProvider {
+            get {
+                lock.lock()
+                defer { lock.unlock() }
+                return provider
+            }
+            set {
+                lock.lock()
+                defer { lock.unlock() }
+                provider = newValue
+            }
+        }
+    }
 
     /**
      Create a number of secure random bytes.
