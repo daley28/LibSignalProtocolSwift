@@ -22,10 +22,7 @@ let package = Package(
         .target(
             name: "CommonCryptoBridge",
             path: "Sources/CommonCryptoBridge",
-            publicHeadersPath: "include",
-            linkerSettings: [
-                .linkedLibrary("CommonCrypto", .when(platforms: [.macOS, .iOS, .tvOS, .watchOS]))
-            ]
+            publicHeadersPath: "include"
         ),
         .target(
             name: "LibSignalProtocolSwift",
